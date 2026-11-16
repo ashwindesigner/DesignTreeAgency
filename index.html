@@ -865,11 +865,6 @@ callAnytime.addEventListener('change',()=>{
 contactForm.addEventListener('submit',async event=>{
   event.preventDefault();
   const submitButton=contactForm.querySelector('[type="submit"]');
-  if(!supabaseConfig.url||!supabaseConfig.publishableKey){
-    contactStatus.hidden=false;
-    contactStatus.textContent='We can’t receive messages right now. Please try again later.';
-    return;
-  }
   submitButton.disabled=true;
   contactStatus.hidden=false;
   contactStatus.textContent='Sending your message...';
@@ -888,33 +883,42 @@ contactForm.addEventListener('submit',async event=>{
     whatsapp_requested:fields.get('whatsapp_requested')==='on'
   };
   const emailData={...Object.fromEntries(fields),...requestData};
-  try{
-    const response=await fetch(`${supabaseConfig.url.replace(/\/+$/,'')}/rest/v1/contact_requests`,{
+  const databaseRequest=supabaseConfig.url&&supabaseConfig.publishableKey
+    ?fetch(`${supabaseConfig.url.replace(/\/+$/,'')}/rest/v1/contact_requests`,{
       method:'POST',
       headers:{apikey:supabaseConfig.publishableKey,'Content-Type':'application/json',Prefer:'return=minimal'},
       body:JSON.stringify(requestData)
-    });
-    if(!response.ok)throw new Error(`Request storage failed (${response.status})`);
+    }).then(response=>{
+      if(!response.ok)throw new Error(`Request storage failed (${response.status})`);
+    })
+    :Promise.reject(new Error('Supabase is not configured'));
+  const emailRequest=fetch('https://formsubmit.co/ajax/ashwin.designer@gmail.com',{
+    method:'POST',
+    headers:{'Content-Type':'application/json',Accept:'application/json'},
+    body:JSON.stringify(emailData)
+  }).then(async response=>{
+    if(!response.ok)throw new Error(`Email notification failed (${response.status})`);
+    const result=await response.json();
+    if(result.success===false||result.success==='false')throw new Error('Email notification was rejected');
+  });
+  const [databaseResult,emailResult]=await Promise.allSettled([databaseRequest,emailRequest]);
+  const databaseSaved=databaseResult.status==='fulfilled';
+  const emailSent=emailResult.status==='fulfilled';
+  if(databaseSaved||emailSent){
     contactForm.reset();
     callDate.disabled=callTime.disabled=false;
     updateCallOptions();
-    contactStatus.textContent='Thank you. Your message has been received. Our team will reach out soon.';
-    submitButton.disabled=false;
-    fetch('https://formsubmit.co/ajax/ashwin.designer@gmail.com',{
-      method:'POST',
-      headers:{'Content-Type':'application/json',Accept:'application/json'},
-      body:JSON.stringify(emailData)
-    }).then(async emailResponse=>{
-      if(!emailResponse.ok)throw new Error(`Email notification failed (${emailResponse.status})`);
-      const result=await emailResponse.json();
-      if(result.success===false||result.success==='false')throw new Error('Email notification was rejected');
-    }).catch(()=>{
-      contactStatus.textContent='Thank you. Your request is saved in the admin inbox, but the email notification could not be sent.';
-    });
-  }catch(error){
-    contactStatus.textContent='We could not send your message right now. Please try again.';
-    submitButton.disabled=false;
   }
+  if(databaseSaved&&emailSent){
+    contactStatus.textContent='Thank you. Your message has been received. Our team will reach out soon.';
+  }else if(emailSent){
+    contactStatus.textContent='Thank you. Your message was emailed to our team, but could not be added to the admin inbox.';
+  }else if(databaseSaved){
+    contactStatus.textContent='Thank you. Your request is saved in the admin inbox, but the email notification could not be sent.';
+  }else{
+    contactStatus.textContent='We could not send your message right now. Please try again.';
+  }
+  submitButton.disabled=false;
 });
 $('#join').onclick=()=>{$('#join').textContent='Joined'};
 </script>
