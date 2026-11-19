@@ -48,3 +48,14 @@ Open `http://localhost:8000/admin.html`, sign in with the admin account, and sub
 ## Inbox tools
 
 The dashboard includes search, status filters, status updates, delete, CSV export, and realtime new-request alerts. It shows and exports call and WhatsApp preferences. Theme, page size, and desktop notification preferences are saved in the current browser only.
+
+## Website chat assistant
+
+The floating "Chat with us" widget (`chat-widget.js`) talks to the `chat` Edge Function (`supabase/functions/chat/index.ts`), which calls the Claude API. The Claude API key lives only in Supabase secrets, never in the browser. When a visitor asks to be contacted, the assistant confirms their details and saves them to `contact_requests`, so they appear in the admin inbox marked "[Submitted via website chat]".
+
+1. Create an API key at https://console.anthropic.com (Settings > API Keys) and set a monthly spend limit there (Settings > Limits). The limit is the real cost cap; the function's per-IP limiter only slows bursts.
+2. Add the key as a secret: Supabase dashboard > Edge Functions > Secrets > add `ANTHROPIC_API_KEY`. Or, with the Supabase CLI: `supabase secrets set ANTHROPIC_API_KEY=sk-ant-...`
+3. Deploy: `supabase functions deploy chat --no-verify-jwt` (the `--no-verify-jwt` flag matches `supabase/config.toml`; the publishable key is not a JWT).
+4. Optional: if the site is served from another domain, set `ALLOWED_ORIGINS` (comma-separated, e.g. `https://www.designtreeagency.com,https://example.github.io`). `localhost` and `127.0.0.1` are always allowed for testing.
+
+The assistant's knowledge of services, contact details, and rules is in `SYSTEM_PROMPT` at the top of the function. Update it when services or contact details change, then redeploy.

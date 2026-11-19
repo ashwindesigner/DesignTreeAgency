@@ -1,0 +1,7 @@
+project_id = "rceptkwnmpbflcmyvepw"
+
+# The website calls this function with the publishable key, which is not a JWT,
+# so gateway JWT verification is off. The function checks the request origin
+# and rate-limits per IP instead.
+[functions.chat]
+verify_jwt = false
