@@ -36,7 +36,7 @@
   .dt-chips button{padding:6px 11px;border:1px solid var(--line,#dde5ec);border-radius:999px;background:var(--surface,#fff);color:var(--ink,#15314a);font:inherit;font-size:13px;cursor:pointer}
   .dt-chips button:hover{border-color:var(--accent,#4aa8f0);color:var(--accent,#4aa8f0)}
   .dt-chat .dt-chat-form{flex:none;margin:0;display:flex;align-items:flex-end;gap:8px;padding:12px;border-top:1px solid var(--line,#dde5ec);background:var(--surface,#fff)}
-  .dt-chat .dt-chat-form textarea{display:block;flex:1;width:auto;min-width:0;margin:0;resize:none;height:44px;min-height:44px;max-height:110px;padding:11px 12px;line-height:1.4;border:1px solid var(--line,#dde5ec);border-radius:12px;background:var(--bg,#f8fafc);color:inherit;font:inherit}
+  .dt-chat .dt-chat-form textarea{display:block;flex:1;width:auto;min-width:0;margin:0;resize:none;height:44px;min-height:44px;max-height:110px;overflow-y:hidden;padding:11px 12px;line-height:1.4;border:1px solid var(--line,#dde5ec);border-radius:12px;background:var(--bg,#f8fafc);color:inherit;font:inherit}
   .dt-chat .dt-chat-form textarea:focus,.dt-chat .dt-chat-form textarea:focus-visible{outline:2px solid var(--accent,#4aa8f0);outline-offset:-1px}
   .dt-chat .dt-chat-form button{display:grid;place-items:center;flex:none;width:44px;height:44px;margin:0;padding:0;border:0;border-radius:12px;background:var(--accent,#4aa8f0);color:var(--accent-ink,#fff);cursor:pointer}
   .dt-chat .dt-chat-form button:disabled{opacity:.5;cursor:default}
@@ -199,7 +199,7 @@
   form.addEventListener('submit', e => {
     e.preventDefault();
     const text = input.value;
-    input.value = ''; input.style.height = '';
+    input.value = ''; input.style.height = ''; input.style.overflowY = 'hidden';
     ask(text);
   });
   input.addEventListener('keydown', e => {
@@ -208,5 +208,6 @@
   input.addEventListener('input', () => {
     input.style.height = 'auto';
     input.style.height = `${Math.min(input.scrollHeight, 110)}px`;
+    input.style.overflowY = input.scrollHeight > 110 ? 'auto' : 'hidden';
   });
 })();
