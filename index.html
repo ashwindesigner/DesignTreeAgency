@@ -309,14 +309,6 @@ form .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 label{display:grid;gap:8px;font-size:15px;font-weight:500}
 input,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:13px 14px;width:100%}
 textarea{min-height:120px;resize:vertical}
-.contact-options{display:grid;gap:12px;margin:0;padding:0;border:0}
-.contact-options legend{margin-bottom:2px;font-size:15px;font-weight:600}
-.contact-options .choice{display:flex;align-items:center;gap:10px;font-size:14px}
-.contact-options .choice input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
-.call-pickers{display:grid;grid-template-columns:1.2fr 1fr;gap:12px}
-.contact-options select{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
-.contact-options select:disabled{opacity:.55;cursor:not-allowed}
-@media (max-width:520px){.call-pickers{grid-template-columns:1fr}}
 .whatsapp-link{display:inline-flex;align-items:center;gap:8px;width:max-content;color:var(--accent);font-size:14px;font-weight:600}
 .whatsapp-link:hover{text-decoration:underline}
 .sent{color:var(--accent);font-weight:600}
@@ -473,16 +465,7 @@ textarea{min-height:120px;resize:vertical}
         <h3>Let's talk</h3><p style="color:var(--ink-soft)">Tell us what you're working on.</p>
         <div class="two"><label for="f-name">Your name<input id="f-name" name="name" required placeholder="Alex Morgan"></label><label for="f-mail">Work email<input id="f-mail" name="email" type="email" required placeholder="alex@company.com"></label></div>
         <label for="f-phone">Phone number<input id="f-phone" name="phone" type="tel" autocomplete="tel" placeholder="+91 999 888 1234"></label>
-        <fieldset class="contact-options">
-          <legend>Preferred call time</legend>
-          <div class="call-pickers">
-            <label for="f-call-date">Date (next 7 days)<select id="f-call-date" name="preferred_call_date"><option value="">Choose a day (optional)</option></select></label>
-            <label for="f-call-time">Time<select id="f-call-time" name="preferred_call_time"><option value="">Choose a time (optional)</option></select></label>
-          </div>
-          <label class="choice" for="f-call-anytime"><input id="f-call-anytime" name="call_anytime" type="checkbox">Call me anytime</label>
-          <label class="choice" for="f-whatsapp"><input id="f-whatsapp" name="whatsapp_requested" type="checkbox">Contact me on WhatsApp</label>
-          <a class="whatsapp-link" href="https://wa.me/919985058875?text=Hi%2C%20I%27d%20like%20to%20discuss%20my%20project%20with%20Design%20Tree%20Agency." target="_blank" rel="noopener noreferrer">Open WhatsApp chat <span aria-hidden="true">&#8599;</span></a>
-        </fieldset>
+        <a class="whatsapp-link" href="https://wa.me/919985058875?text=Hi%2C%20I%27d%20like%20to%20discuss%20my%20project%20with%20Design%20Tree%20Agency." target="_blank" rel="noopener noreferrer">Open WhatsApp chat <span aria-hidden="true">&#8599;</span></a>
         <label for="f-msg">What should we know?<textarea id="f-msg" name="message" placeholder="Team size, the decision you're facing, your timeline"></textarea></label>
         <div><button class="btn btn-dark" type="submit">Send message</button></div>
         <p class="sent" id="contact-status" role="status" hidden></p>
@@ -835,34 +818,6 @@ window.addEventListener('resize',observeShowcaseSlides,{passive:true});
 const contactForm=$('#form');
 const contactStatus=$('#contact-status');
 const supabaseConfig=window.DESIGN_TREE_AGENCY_SUPABASE||{};
-const callAnytime=$('#f-call-anytime');
-const callDate=$('#f-call-date');
-const callTime=$('#f-call-time');
-const localDateValue=date=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-const updateCallOptions=()=>{
-  callDate.replaceChildren(new Option('Choose a day (optional)',''));
-  callTime.replaceChildren(new Option('Choose a time (optional)',''));
-  const today=new Date();
-  today.setHours(0,0,0,0);
-  for(let dayOffset=0;dayOffset<7;dayOffset++){
-    const date=new Date(today);
-    date.setDate(today.getDate()+dayOffset);
-    const label=new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric'}).format(date);
-    callDate.add(new Option(dayOffset===0?`Today, ${label}`:label,localDateValue(date)));
-  }
-  for(let minutes=9*60;minutes<=17*60+30;minutes+=30){
-    const hours=Math.floor(minutes/60);
-    const minute=minutes%60;
-    const value=`${String(hours).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
-    const label=new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(new Date(2000,0,1,hours,minute));
-    callTime.add(new Option(label,value));
-  }
-};
-updateCallOptions();
-callAnytime.addEventListener('change',()=>{
-  callDate.disabled=callTime.disabled=callAnytime.checked;
-  if(callAnytime.checked)callDate.value=callTime.value='';
-});
 contactForm.addEventListener('submit',async event=>{
   event.preventDefault();
   const submitButton=contactForm.querySelector('[type="submit"]');
@@ -870,20 +825,13 @@ contactForm.addEventListener('submit',async event=>{
   contactStatus.hidden=false;
   contactStatus.textContent='Sending your message...';
   const fields=new FormData(contactForm);
-  const callAnytimeRequested=fields.get('call_anytime')==='on';
-  const preferredCallDate=fields.get('preferred_call_date');
-  const preferredCallTime=fields.get('preferred_call_time');
-  const preferredCallValue=preferredCallDate&&preferredCallTime?new Date(`${preferredCallDate}T${preferredCallTime}`).toISOString():null;
   const requestData={
     name:fields.get('name'),
     email:fields.get('email'),
     phone:fields.get('phone')||null,
-    message:fields.get('message'),
-    preferred_call_at:callAnytimeRequested?null:preferredCallValue,
-    call_anytime:callAnytimeRequested,
-    whatsapp_requested:fields.get('whatsapp_requested')==='on'
+    message:fields.get('message')
   };
-  const emailData={...Object.fromEntries(fields),...requestData};
+  const emailData=Object.fromEntries(fields);
   const databaseRequest=supabaseConfig.url&&supabaseConfig.publishableKey
     ?fetch(`${supabaseConfig.url.replace(/\/+$/,'')}/rest/v1/contact_requests`,{
       method:'POST',
@@ -908,8 +856,6 @@ contactForm.addEventListener('submit',async event=>{
   emailRequest.catch(error=>console.warn('Contact email notification:',error.message));
   const showSuccess=()=>{
     contactForm.reset();
-    callDate.disabled=callTime.disabled=false;
-    updateCallOptions();
     contactStatus.textContent='Thank you. Your message has been received. Our team will reach out soon.';
   };
   try{
