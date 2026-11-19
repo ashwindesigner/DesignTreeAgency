@@ -893,31 +893,39 @@ contactForm.addEventListener('submit',async event=>{
       if(!response.ok)throw new Error(`Request storage failed (${response.status})`);
     })
     :Promise.reject(new Error('Supabase is not configured'));
+  // The email notification can take up to a minute, so it runs in the background
+  // (keepalive lets it finish even if the visitor leaves the page).
   const emailRequest=fetch('https://formsubmit.co/ajax/ashwin.designer@gmail.com',{
     method:'POST',
+    keepalive:true,
     headers:{'Content-Type':'application/json',Accept:'application/json'},
     body:JSON.stringify(emailData)
   }).then(async response=>{
     if(!response.ok)throw new Error(`Email notification failed (${response.status})`);
     const result=await response.json();
-    if(result.success===false||result.success==='false')throw new Error('Email notification was rejected');
+    if(result.success===false||result.success==='false')throw new Error(result.message||'Email notification was rejected');
   });
-  const [databaseResult,emailResult]=await Promise.allSettled([databaseRequest,emailRequest]);
-  const databaseSaved=databaseResult.status==='fulfilled';
-  const emailSent=emailResult.status==='fulfilled';
-  if(databaseSaved||emailSent){
+  emailRequest.catch(error=>console.warn('Contact email notification:',error.message));
+  const showSuccess=()=>{
     contactForm.reset();
     callDate.disabled=callTime.disabled=false;
     updateCallOptions();
-  }
-  if(databaseSaved&&emailSent){
     contactStatus.textContent='Thank you. Your message has been received. Our team will reach out soon.';
-  }else if(emailSent){
-    contactStatus.textContent='Thank you. Your message was emailed to our team, but could not be added to the admin inbox.';
-  }else if(databaseSaved){
-    contactStatus.textContent='Thank you. Your request is saved in the admin inbox, but the email notification could not be sent.';
-  }else{
-    contactStatus.textContent='We could not send your message right now. Please try again.';
+  };
+  try{
+    // Saved to the admin inbox: confirm straight away without waiting for the email.
+    await databaseRequest;
+    showSuccess();
+  }catch(databaseError){
+    console.warn('Contact request storage:',databaseError.message);
+    // Inbox unavailable: fall back to the email notification before confirming.
+    contactStatus.textContent='Still sending, this can take a few more seconds...';
+    try{
+      await emailRequest;
+      showSuccess();
+    }catch{
+      contactStatus.textContent='We could not send your message right now. Please try again, or message us on WhatsApp.';
+    }
   }
   submitButton.disabled=false;
 });
