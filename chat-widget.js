@@ -5,7 +5,7 @@
   if (!config.url) return;
   const endpoint = `${config.url.replace(/\/+$/, '')}/functions/v1/chat`;
   const STORAGE_KEY = 'design-tree-agency-chat';
-  const GREETING = "Hi! I'm the Design Tree assistant. Tell me a little about your business and what you'd like to grow, and I'll point you to the right services, or connect you with the team.";
+  const GREETING = "Hi! I'm the Design Tree assistant. How can I help your business grow?";
   const SUGGESTIONS = ['What services do you offer?', 'How do you price projects?', 'I want to book a call'];
 
   const css = `
