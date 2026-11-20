@@ -79,11 +79,16 @@ section{padding-block:110px}
   .nav.is-scrolled .btn{padding:10px 14px;font-size:14px}
 }
 @media (max-width:520px){
-  .nav{flex-wrap:wrap;row-gap:8px}
-  .nav .logo{width:100%;justify-content:center}
-  .nav .logo img{width:140px}
-  .nav-actions{width:100%;justify-content:flex-end}
-  .theme-choice{width:34px;height:34px}
+  /* One row: logo left, theme toggle + CTA right */
+  .nav,.nav.is-scrolled{flex-wrap:nowrap;gap:8px;width:calc(100% - 24px);margin:12px auto 0;padding:10px 10px 10px 14px;border-radius:16px}
+  .nav .logo{flex:0 1 auto;min-width:0}
+  .nav .logo img,.nav.is-scrolled .logo img{width:min(124px,36vw)}
+  .nav-actions{gap:4px}
+  .theme-choice{width:36px;height:36px}
+  .nav .btn,.nav.is-scrolled .btn{padding:10px 14px;font-size:14px;white-space:nowrap}
+}
+@media (max-width:350px){
+  .nav .btn,.nav.is-scrolled .btn{padding:9px 11px;font-size:13px}
 }
 
 /* hero */
